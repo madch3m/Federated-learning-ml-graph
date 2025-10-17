@@ -1,0 +1,22 @@
+version: '3.9'
+services:
+  server:
+    build: ./server
+    container_name: fed_server
+    ports:
+      - "5000:5000"
+
+
+  client1:
+    build: ./client
+    container_name: fed_client1
+    depends_on:
+      - server
+
+  client2:
+    build: ./client
+    container_name: fed_client2
+    depends_on:
+      - server
+
+      
