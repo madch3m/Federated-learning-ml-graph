@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 
 COPY requirements_server.txt .
-RUN pip install --no-cache-dir -r requirements_server.txt .
+RUN pip install --no-cache-dir -r requirements_server.txt 
 
 
 COPY model/ ./model/
