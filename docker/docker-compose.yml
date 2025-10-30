@@ -15,6 +15,7 @@ services:
       - ./data:/app/data
     networks:
       - federated_net
+
   client_0:
     build:
       context: .
@@ -33,13 +34,14 @@ services:
       - NUM_ROUNDS=25
       - DIRICHLET_ALPHA=0.5
       - SEED=42
-      - START_DELAY=0
+      - START_DELAY=15
       - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
     networks:
       - federated_net
     restart: on-failure
+
   client_1:
     build:
       context: .
@@ -58,7 +60,7 @@ services:
       - NUM_ROUNDS=25
       - DIRICHLET_ALPHA=0.5
       - SEED=42
-      - START_DELAY=2
+      - START_DELAY=15
       - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
@@ -84,13 +86,14 @@ services:
       - NUM_ROUNDS=25
       - DIRICHLET_ALPHA=0.5
       - SEED=42
-      - START_DELAY=4
+      - START_DELAY=15
       - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
     networks:
       - federated_net
     restart: on-failure
+
   client_3:
     build:
       context: .
@@ -109,13 +112,14 @@ services:
       - NUM_ROUNDS=25
       - DIRICHLET_ALPHA=0.5
       - SEED=42
-      - START_DELAY=6
+      - START_DELAY=15
       - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
     networks:
       - federated_net
     restart: on-failure
+    
   client_4:
     build:
       context: .
@@ -135,7 +139,7 @@ services:
       - NUM_ROUNDS=25
       - DIRICHLET_ALPHA=0.5
       - SEED=42
-      - START_DELAY=8
+      - START_DELAY=15
       - PYTHONUNBUFFERED=1
     volumes:
       - ./data:/app/data
