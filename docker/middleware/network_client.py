@@ -8,7 +8,7 @@ from pathlib import Path
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from federated_client import FederatedClient
+from client.local_server import FederatedClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
