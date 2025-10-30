@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 
 from model.cnn import CNN
-from federated_server import FederatedServer
+from server.model_server import FederatedServer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
