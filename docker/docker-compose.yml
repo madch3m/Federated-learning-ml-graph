@@ -20,7 +20,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 60s
   client_0:
     build:
       context: .
@@ -30,7 +30,7 @@ services:
       server:
         condition: service_healthy
     environment:
-      - SERVER_URL=http://server:8000
+      - SERVER_URL=http://localhost:8000
       - CLIENT_ID=0
       - NUM_CLIENTS=5
       - DEVICE=cpu

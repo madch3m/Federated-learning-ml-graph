@@ -12,9 +12,9 @@ COPY client/ ./client/
 COPY middleware/ ./middleware/
 COPY main.py .
 RUN mkdir -p /app/data
-ENV SERVER_URL=http://server:8000
+ENV SERVER_URL=http://localhost:8000
 ENV CLIENT_ID=0
-ENV DEVICE=cpu
+ENV DEVICE=mps
 ENV LOCAL_EPOCHS=2
 ENV BATCH_SIZE=64
 ENV LEARNING_RATE=0.01
