@@ -11,7 +11,7 @@ import logging
 from torchvision import datasets, transforms
 from torch.utils.data import Subset
 
-from middleware.network_client import create_network_client
+from middleware.network_client import NetworkThrottleClient
 from utils.dirichlet_partition import dirichlet_partition
 
 logging.basicConfig(
@@ -116,7 +116,7 @@ def main():
     
     # Create network-tolerant client
     try:
-        client = create_network_client(
+        client = NetworkThrottleClient(
             client_id=client_id,
             dataset=dataset,
             server_url=server_url,
