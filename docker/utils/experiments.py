@@ -10,9 +10,21 @@ def create_experiment_dir(hparams: dict, exp_root: str = "experiments", name: st
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
     if name is None:
         parts = [ts]
-        for key in ("num_clients", "iid", "dirichlet_alpha", "local_epochs", "rounds", "lr", "batch"):
+        # Map common parameter names that might vary
+        key_mapping = {
+            "num_clients": "num_clients",
+            "iid": "iid",
+            "dirichlet_alpha": "dirichlet_alpha",
+            "local_epochs": "local_epochs",
+            "rounds": "rounds",
+            "lr": "lr",
+            "batch": "batch",
+            "local_batch_size": "batch",  # Also handle local_batch_size
+        }
+        
+        for key, display_name in key_mapping.items():
             if key in hparams:
-                parts.append(f"{key}={hparams[key]}")
+                parts.append(f"{display_name}={hparams[key]}")
         name = "_".join(map(str, parts))
 
     exp_dir = Path(exp_root) / name
