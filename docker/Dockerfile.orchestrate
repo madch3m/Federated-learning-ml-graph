@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements (orchestration needs both server and client dependencies)
 COPY requirements_server.txt .
 RUN pip install --no-cache-dir -r requirements_server.txt
+RUN pip install matplotlib
 
 # Copy all necessary files for orchestration
 COPY model/ ./model/
