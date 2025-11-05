@@ -204,8 +204,7 @@ async def submit_client_update(
     if state.server is None:
         raise HTTPException(status_code=400, detail="Server not initialized")
     
-    # For this example, we'll accept the model state as a query parameter or separate call
-    # In practice, you'd handle binary upload properly
+
     logger.info(f"Client {client_id} submitted update ({num_samples} samples)")
     
     return {
@@ -297,6 +296,7 @@ async def trigger_aggregation():
                 state.evaluation_history["acc"].append(acc)
                 state.evaluation_history["loss"].append(loss)
                 logger.info(f"[Round {state.current_round:02d}] Test Acc: {acc*100:5.2f}% | Test Loss: {loss:.4f}")
+                await handle_training_completion()
             
             # Check if training is complete
             if state.current_round >= state.max_rounds:
