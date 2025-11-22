@@ -1,0 +1,31 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements (orchestration needs both server and client dependencies)
+COPY requirements_server.txt .
+RUN pip install --no-cache-dir -r requirements_server.txt
+RUN pip install matplotlib
+
+# Copy all necessary files for orchestration
+COPY model/ ./model/
+COPY utils/ ./utils/
+COPY client/ ./client/
+COPY server/ ./server/
+COPY orchestrate.py .
+
+# Create directories for data and experiments
+RUN mkdir -p /app/data /app/experiments
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV DEVICE=cpu
+
+# Run the orchestration script
+CMD ["python", "orchestrate.py"]
+

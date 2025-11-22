@@ -9,6 +9,7 @@ from pathlib import Path
 from model.cnn import CNN
 from utils.experiments import create_experiment_dir
 from utils.dirichlet_partition import dirichlet_partition
+from utils.data_loader import get_dataset_for_model
 from client.local_server import FederatedClient
 from server.model_server import FederatedServer
 
@@ -29,26 +30,27 @@ class HParams:
     seed: int = 42
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-hp = HParams()
-random.seed(hp.seed)
-torch.manual_seed(hp.seed)
-
-
-def load_data() -> Tuple[List[Subset], Dataset]:
-    """Load and partition the MNIST dataset for federated learning."""
-    transform = transforms.Compose([transforms.ToTensor()])
-    train = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
-    test = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
-
-    if hp.iid:
+def load_client_data(client_id: int, num_clients: int, alpha: float = 0.5, seed: int = 42):
+    """
+    Load and partition data for a specific client based on model selection.
     
-        sizes = [len(train) // hp.num_clients] * hp.num_clients
-        sizes[-1] += len(train) - sum(sizes)
-        shards = random_split(train, sizes, generator=torch.Generator().manual_seed(hp.seed))
-        clients = [Subset(train, s.indices) for s in shards]
-        return clients, test
-    else:
+    Args:
+        client_id: ID of this client
+        num_clients: Total number of clients in the federation
+        alpha: Dirichlet alpha parameter for non-IID partitioning
+        seed: Random seed for reproducibility
+        
+    Returns:
+        Dataset subset for this client
+    """
+    # Get model name from environment variable
+    model_name = os.getenv("MODEL_NAME", "cnn").lower().strip()
+    dataset_name = "CIFAR10" if "cifar10" in model_name else "MNIST"
+    
+    logger.info(f"Loading {dataset_name} data for client {client_id}/{num_clients} (model: {model_name})")
+    
+    # Load appropriate dataset
+    train, _ = get_dataset_for_model(model_name, data_dir="./data")
     
         clients = dirichlet_partition(
             train=train,
@@ -57,7 +59,24 @@ def load_data() -> Tuple[List[Subset], Dataset]:
             seed=hp.seed,
             ensure_min_size=True,
         )
-        return clients, test
+        
+        if client_id >= len(clients):
+            logger.error(f"Client ID {client_id} exceeds number of clients {len(clients)}")
+            sys.exit(1)
+        
+        client_dataset = clients[client_id]
+        logger.info(f"Client {client_id} has {len(client_dataset)} samples from {dataset_name}")
+        
+        return client_dataset
+        
+    except ImportError:
+        logger.warning("Dirichlet partition not available, using random split")
+        # Fallback to random split
+        from torch.utils.data import random_split
+        sizes = [len(train) // num_clients] * num_clients
+        sizes[-1] += len(train) - sum(sizes)
+        shards = random_split(train, sizes, generator=torch.Generator().manual_seed(seed))
+        return Subset(train, shards[client_id].indices)
 
 
 def create_clients(client_datasets: List[Subset]) -> List[FederatedClient]:

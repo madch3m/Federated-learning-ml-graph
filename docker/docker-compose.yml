@@ -10,6 +10,8 @@ services:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
+      - MODEL_NAME=${MODEL_NAME:-cnn}  # Model selection: cnn, cifar10_cnn, or resnet
+      - USE_DISTRIBUTED=${USE_DISTRIBUTED:-false}  # Enable distributed aggregation (requires multiple GPUs)
     volumes:
       - ./experiments:/app/experiments
       - ./data:/app/data
@@ -36,6 +38,7 @@ services:
       - SEED=42
       - START_DELAY=15
       - PYTHONUNBUFFERED=1
+      - MODEL_NAME=${MODEL_NAME:-cnn}  # Must match server model
     volumes:
       - ./data:/app/data
     networks:
@@ -145,6 +148,24 @@ services:
     networks:
       - federated_net
     restart: on-failure
+
+  orchestrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrate
+    container_name: federated_orchestrate
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DEVICE=cpu
+      - MODEL_NAME=${MODEL_NAME:-cnn}  # Model selection: cnn, cifar10_cnn, or resnet
+    volumes:
+      - ./experiments:/app/experiments
+      - ./data:/app/data
+    networks:
+      - federated_net
+    profiles:
+      - orchestrate  # Only run when explicitly requested
+
 networks:
   federated_net:
     driver: bridge

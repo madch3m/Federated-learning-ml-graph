@@ -118,7 +118,7 @@ class NetworkThrottleClient:
         return None
     
     def upload_update(self, state_dict: Dict[str, torch.Tensor], num_samples: int) -> bool:
-
+        """Upload model state to server."""
         # Serialize the model state
         serialized_state = pickle.dumps(state_dict)
         
@@ -126,20 +126,18 @@ class NetworkThrottleClient:
             try:
                 logger.info(f"Client {self.client_id}: Uploading update (attempt {attempt + 1})")
                 
-                # First, register the update
+                # Send model state directly to submit_update endpoint
                 response = self.session.post(
-                    f"{self.server_url}/update",
-                    json={
-                        "client_id": self.client_id,
-                        "num_samples": num_samples
-                    },
-                    timeout=self.connection_timeout
+                    f"{self.server_url}/submit_update/{self.client_id}",
+                    params={"num_samples": num_samples},
+                    data=serialized_state,
+                    headers={"Content-Type": "application/octet-stream"},
+                    timeout=self.request_timeout
                 )
                 response.raise_for_status()
                 
-                # For this implementation, we'll store the update locally
-                # In production, you'd upload the binary data
-                logger.info(f"Client {self.client_id}: Update registered successfully")
+                result = response.json()
+                logger.info(f"Client {self.client_id}: Update submitted successfully - {result.get('updates_received', 0)}/{result.get('expected_clients', 0)} updates received")
                 self.last_successful_update = time.time()
                 
                 return True
@@ -176,8 +174,13 @@ class NetworkThrottleClient:
 
         try:
             # Create a temporary model to load the global state
-            from model.cnn import CNN
-            global_model = CNN()
+            # Use the same model type as the server
+            from model import get_model
+            import os
+            
+            # Get model name from environment or default to cnn
+            model_name = os.getenv("MODEL_NAME", "cnn").lower().strip()
+            global_model = get_model(model_name)
             global_model.load_state_dict(global_model_state)
             
             logger.info(f"Client {self.client_id}: Starting local training for round {self.current_round}")

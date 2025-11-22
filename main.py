@@ -1,15 +1,24 @@
+import sys
+import os
+from pathlib import Path
+
+# Add docker directory to Python path to import modules
+docker_dir = Path(__file__).parent / "docker"
+if str(docker_dir) not in sys.path:
+    sys.path.insert(0, str(docker_dir))
+
 import torch
 import random
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Tuple
 from torchvision import datasets, transforms
 from torch.utils.data import Dataset, Subset, random_split
-from pathlib import Path
 
-from model.cnn import CNN
+from model import get_model
 from utils.plotter import plot_history
 from utils.experiments import create_experiment_dir
 from utils.dirichlet_partition import dirichlet_partition
+from utils.data_loader import get_dataset_for_model
 from client.local_server import FederatedClient
 from server.model_server import FederatedServer
 
@@ -29,36 +38,40 @@ class HParams:
     dirichlet_alpha: float = 0.5
     seed: int = 42
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    model_name: str = "cnn"  # Model to use: "cnn", "cifar10_cnn", or "resnet"
 
 
 hp = HParams()
+# Override model_name from environment variable if set
+if os.getenv("MODEL_NAME"):
+    hp.model_name = os.getenv("MODEL_NAME").lower().strip()
 random.seed(hp.seed)
 torch.manual_seed(hp.seed)
 
 
 def load_data() -> Tuple[List[Subset], Dataset]:
-    """Load and partition the MNIST dataset for federated learning."""
-    transform = transforms.Compose([transforms.ToTensor()])
-    train = datasets.MNIST(root="./data", train=True, download=True, transform=transform)
-    test = datasets.MNIST(root="./data", train=False, download=True, transform=transform)
-
+    """Load and partition the dataset for federated learning."""
+    # Load appropriate dataset based on model
+    train, test = get_dataset_for_model(hp.model_name, data_dir="./data")
+    
+    # Partition data
     if hp.iid:
-        # IID partitioning: random split
-        sizes = [len(train) // hp.num_clients] * hp.num_clients
-        sizes[-1] += len(train) - sum(sizes)
-        shards = random_split(train, sizes, generator=torch.Generator().manual_seed(hp.seed))
-        clients = [Subset(train, s.indices) for s in shards]
-        return clients, test
+        # IID partition: random split
+        sample_size = [len(train) // hp.num_clients] * hp.num_clients
+        sample_size[-1] += len(train) - sum(sample_size)
+        shards = random_split(train, sample_size, generator=torch.Generator().manual_seed(hp.seed))
+        client_datasets = [Subset(train, s.indices) for s in shards]
     else:
-        # Non-IID partitioning: Dirichlet distribution
-        clients = dirichlet_partition(
+        # Non-IID partition: Dirichlet distribution
+        client_datasets = dirichlet_partition(
             train=train,
             num_clients=hp.num_clients,
             alpha=hp.dirichlet_alpha,
             seed=hp.seed,
             ensure_min_size=True,
         )
-        return clients, test
+    
+    return client_datasets, test
 
 
 def create_clients(client_datasets: List[Subset]) -> List[FederatedClient]:
@@ -85,9 +98,12 @@ def orchestrate() -> Tuple[Dict[str, List[float]], FederatedServer]:
     # Load and partition data
     client_datasets, testset = load_data()
     
+    # Create model based on model_name
+    model = get_model(hp.model_name)
+    
     # Create clients and server
     clients = create_clients(client_datasets)
-    server = FederatedServer(model=CNN(), device=hp.device)
+    server = FederatedServer(model=model, device=hp.device)
     
     # Initialize history tracking
     history: Dict[str, List[float]] = {"round": [], "acc": [], "loss": []}
@@ -134,6 +150,7 @@ def orchestrate() -> Tuple[Dict[str, List[float]], FederatedServer]:
 if __name__ == "__main__":
     exp_dir: Path = create_experiment_dir(asdict(hp))
     history, server = orchestrate()
-    server.save_model(str(exp_dir / "mnist_cnn.pt"))
+    model_filename = f"{hp.model_name}_model.pt"
+    server.save_model(str(exp_dir / model_filename))
     plot_history(history, exp_dir=exp_dir, show=True)
     print(f"[OK] Experiment saved to: {exp_dir}")
