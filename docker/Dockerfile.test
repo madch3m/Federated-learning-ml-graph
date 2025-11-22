@@ -1,0 +1,23 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements_server.txt .
+COPY requirements_client.txt .
+RUN pip install --no-cache-dir -r requirements_server.txt && \
+    pip install --no-cache-dir -r requirements_client.txt
+
+COPY model/ ./model/
+COPY utils/ ./utils/
+COPY server/ ./server/
+COPY client/ ./client/
+COPY test_aggregation.py .
+COPY test_integration.py .
+
+CMD ["python", "test_aggregation.py"]
+

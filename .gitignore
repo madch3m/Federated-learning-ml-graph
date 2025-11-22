@@ -7,3 +7,4 @@ experiments/
 *.png
 *.PNG
 *.[jJ][pP][gG]
+*.DS_Store

@@ -1,0 +1,23 @@
+FROM python:3.10-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y \
+gcc \
+g++ \
+&& rm -rf /var/lib/apt/lists/*
+COPY requirements_client.txt .
+RUN pip install --no-cache-dir -r requirements_client.txt
+COPY model/ ./model/
+COPY utils/ ./utils/
+COPY client/ ./client/
+COPY middleware/ ./middleware/
+COPY main.py .
+RUN mkdir -p /app/data
+ENV SERVER_URL=http://server:8000
+ENV CLIENT_ID=0
+ENV DEVICE=cpu
+ENV LOCAL_EPOCHS=2
+ENV BATCH_SIZE=64
+ENV LEARNING_RATE=0.01
+ENV NUM_ROUNDS=25
+CMD ["python","main.py"]
+
