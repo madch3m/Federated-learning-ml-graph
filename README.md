@@ -11,13 +11,13 @@
 ### Using Docker (Recommended):
 ##### On MacOS/Linux:
 ```bash
-# Run with default CNN model
+# To run with default CNN model
 chmod +x setup.sh && ./setup.sh --docker
 
-# Run with CIFAR10 CNN model
+# To run with CIFAR10 CNN model
 ./setup.sh --docker --model cifar10_cnn
 
-# Run with ResNet model
+# To run with ResNet model
 ./setup.sh --docker --model resnet
 
 # Or use short flags
@@ -26,10 +26,10 @@ chmod +x setup.sh && ./setup.sh --docker
 
 ##### On Windows PowerShell:
 ```powershell
-# Run with default CNN model
+# To run with default CNN model
 .\setup.ps1 --docker
 
-# Run with specific model
+# To run with specific model
 .\setup.ps1 --docker --model cifar10_cnn
 ```
 
@@ -39,7 +39,7 @@ chmod +x setup.sh && ./setup.sh --docker
 # Setup and run with default CNN model
 chmod +x setup.sh && ./setup.sh --run
 
-# Run with specific model
+# To run with specific model
 ./setup.sh --run --model cifar10_cnn
 
 # Just setup without running
